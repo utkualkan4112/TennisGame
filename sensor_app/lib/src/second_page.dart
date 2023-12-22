@@ -6,7 +6,7 @@ import 'package:sensors_plus/sensors_plus.dart';
 
 
 class SecondPage extends StatefulWidget {
-  final MySocket socket;
+  final MyServerSocket socket;
   const SecondPage({Key? key, required this.socket}) : super(key: key);
 
 
@@ -107,7 +107,7 @@ class _SecondPageState extends State<SecondPage> {
     for (final subscription in _streamSubscriptions) {
       subscription.cancel();
     }
-    widget.socket.closeConnection();
+    widget.socket.stop();
   }
 
   @override

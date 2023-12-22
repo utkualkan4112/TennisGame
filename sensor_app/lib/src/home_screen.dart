@@ -19,7 +19,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController portController = TextEditingController();
 
   String connectionStatus = '';
-  MySocket socket = MySocket();
+  MyServerSocket socket = MyServerSocket();
 
   @override
   void dispose() {
@@ -40,61 +40,22 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            TextField(
-              controller: ipController,
-              decoration: const InputDecoration(
-                labelText: 'IP Address',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: portController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Port',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 20),
+
             ElevatedButton(
-              onPressed: _connectToServer,
+              onPressed: () async {
+                  await socket.start('0.0.0.0', 2020);
+                  _goToSecondPage();
+                },
               child: const Text('Connect'),
             ),
-            const SizedBox(height: 20),
-            Text(
-              connectionStatus,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.red,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+
           ],
         ),
       ),
     );
   }
 
-  Future<void> _connectToServer() async {
-    String ip = ipController.text.trim();
-    int port = int.tryParse(portController.text.trim()) ?? 0;
 
-    if (ip.isNotEmpty && port != 0) {
-      try {
-        await socket.connect(ip, port);
-        _goToSecondPage();
-      } catch (e) {
-        setState(() {
-          connectionStatus = 'Connection error: $e';
-        });
-      }
-    } else {
-      setState(() {
-        connectionStatus = 'Please enter valid IP and port';
-      });
-    }
-  }
 
   void _goToSecondPage () {
     Navigator.push(
