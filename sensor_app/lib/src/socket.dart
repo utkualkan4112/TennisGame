@@ -49,9 +49,8 @@ class MyServerSocket {
 
   // Send data to all connected clients
   void sendData(String data) {
-    List<int> encodedData = utf8.encode(data);
     for (var client in _clients) {
-      client.write(encodedData);
+      client.write(data);
     }
   }
 

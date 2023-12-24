@@ -1,13 +1,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:sensor_app/src/socket.dart';
+import 'package:sensor_app/src/udp_server.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 
 
 
 class SecondPage extends StatefulWidget {
-  final MyServerSocket socket;
-  const SecondPage({Key? key, required this.socket}) : super(key: key);
+  final UdpServer server;
+  const SecondPage({Key? key, required this.server}) : super(key: key);
 
 
   @override
@@ -107,7 +108,7 @@ class _SecondPageState extends State<SecondPage> {
     for (final subscription in _streamSubscriptions) {
       subscription.cancel();
     }
-    widget.socket.stop();
+    widget.server.stop();
   }
 
   @override
@@ -119,9 +120,12 @@ class _SecondPageState extends State<SecondPage> {
             (UserAccelerometerEvent event) {
           final now = DateTime.now();
           setState(() {
-            //widget.socket.sendData("Kemal");
-            widget.socket.sendData(':GYRO:${_userAccelerometerEvent?.x.toStringAsFixed(1)} ${_userAccelerometerEvent?.y.toStringAsFixed(1)} ${_userAccelerometerEvent?.z.toStringAsFixed(1)} \n');
-            //print(':GYRO:${_userAccelerometerEvent?.x.toStringAsFixed(1)} ${_userAccelerometerEvent?.y.toStringAsFixed(1)} ${_userAccelerometerEvent?.z.toStringAsFixed(1)} \n');
+            const double threshold = 0.1; // Define a suitable threshold
+            if (_userAccelerometerEvent != null && (_userAccelerometerEvent!.x.abs() > threshold || _userAccelerometerEvent!.y.abs() > threshold || _userAccelerometerEvent!.z.abs() > threshold)) {
+              // Send data
+              widget.server.sendDataToClient('ACC:${_userAccelerometerEvent?.x.toStringAsFixed(1)} ${_userAccelerometerEvent?.y.toStringAsFixed(1)} ${_userAccelerometerEvent?.z.toStringAsFixed(1)} \n');
+            }
+
             _userAccelerometerEvent = event;
             if (_userAccelerometerUpdateTime != null) {
               final interval = now.difference(_userAccelerometerUpdateTime!);
@@ -152,7 +156,13 @@ class _SecondPageState extends State<SecondPage> {
             (GyroscopeEvent event) {
           final now = DateTime.now();
           setState(() {
-            widget.socket.sendData(':ACC:${_gyroscopeEvent?.x.toStringAsFixed(1)} ${_gyroscopeEvent?.y.toStringAsFixed(1)} ${_gyroscopeEvent?.z.toStringAsFixed(1)} \n');
+            const double threshold = 0.1; // Define a suitable threshold
+            if (_gyroscopeEvent != null && (_gyroscopeEvent!.x.abs() > threshold || _gyroscopeEvent!.y.abs() > threshold || _gyroscopeEvent!.z.abs() > threshold)) {
+              // Send data
+              widget.server.sendDataToClient('GYRO:${_gyroscopeEvent?.x.toStringAsFixed(1)} ${_gyroscopeEvent?.y.toStringAsFixed(1)} ${_gyroscopeEvent?.z.toStringAsFixed(1)} \n');
+            }
+
+
             _gyroscopeEvent = event;
             if (_gyroscopeUpdateTime != null) {
               final interval = now.difference(_gyroscopeUpdateTime!);

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sensor_app/src/socket.dart';
+import 'package:sensor_app/src/udp_server.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:flutter_sensors/flutter_sensors.dart';
 
@@ -19,7 +20,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController portController = TextEditingController();
 
   String connectionStatus = '';
-  MyServerSocket socket = MyServerSocket();
+  UdpServer server = UdpServer(9090);
 
   @override
   void dispose() {
@@ -42,8 +43,8 @@ class _MyHomePageState extends State<MyHomePage> {
           children: <Widget>[
 
             ElevatedButton(
-              onPressed: () async {
-                  await socket.start('0.0.0.0', 2020);
+              onPressed: () {
+                  server.start();
                   _goToSecondPage();
                 },
               child: const Text('Connect'),
@@ -61,7 +62,7 @@ class _MyHomePageState extends State<MyHomePage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => SecondPage(socket: socket,),
+        builder: (context) => SecondPage(server: server,),
       ),
     );
   }
