@@ -120,7 +120,7 @@ class _SecondPageState extends State<SecondPage> {
             (UserAccelerometerEvent event) {
           final now = DateTime.now();
           setState(() {
-            const double threshold = 0.1; // Define a suitable threshold
+            const double threshold = 0.3; // Define a suitable threshold
             if (_userAccelerometerEvent != null && (_userAccelerometerEvent!.x.abs() > threshold || _userAccelerometerEvent!.y.abs() > threshold || _userAccelerometerEvent!.z.abs() > threshold)) {
               // Send data
               widget.server.sendDataToClient('ACC:${_userAccelerometerEvent?.x.toStringAsFixed(1)} ${_userAccelerometerEvent?.y.toStringAsFixed(1)} ${_userAccelerometerEvent?.z.toStringAsFixed(1)} \n');

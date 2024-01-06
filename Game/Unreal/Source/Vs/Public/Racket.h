@@ -4,12 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+#include "Madgwick.h"
 #include "Racket.generated.h"
 
 
 class UStaticMeshComponent;
 class Atcp_socket;
 class Audp_module;
+
 
 UCLASS()
 class VS_API ARacket : public APawn
@@ -20,6 +22,17 @@ public:
 	// Sets default values for this pawn's properties
 	ARacket();
 
+	UPROPERTY()
+	FMadgwickFilter Filter;  // Pointer to the filter
+
+	UPROPERTY()
+	UMadgwick* Madgwick;  // Pointer to the Unreal Engine wrapper of the filter
+
+	UPROPERTY(EditAnywhere)
+	float frequency = 40.0f;  // 40 Hz as calculated
+
+	UPROPERTY(EditAnywhere)
+	float beta = 0.1f;  // Example beta, may need tuning
 	
 
 	UPROPERTY(EditAnywhere)
@@ -35,17 +48,22 @@ public:
 	int32 ConnectionID;
 
 	UPROPERTY(VisibleAnywhere)
-	FTransform transform;
+	FVector Accelerometer;
 
 	UPROPERTY(VisibleAnywhere)
-	FVector Vector;
+	FVector Gyrascope;
 
 	UPROPERTY(VisibleAnywhere)
-	FRotator Rotation;
+	FVector Magnetometer;
+
+	FRotator Orientation;
+
+
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
 
 public:	
 	// Called every frame
@@ -53,5 +71,7 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	void UpdateFilter(FVector Gyro, FVector Acc, FVector Mag);
 
 };

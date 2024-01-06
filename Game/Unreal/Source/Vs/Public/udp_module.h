@@ -33,14 +33,14 @@ public:
 	FIPv4Address RemoteAddress;
 	uint16 RemotePort = 9090;
 	int32 BufferSize;
-	FString IP = "192.168.1.2";
+	FString IP = "192.168.1.21";
 	//FString IP = "127.0.0.1";
 
 	ISocketSubsystem* SocketSubsystem;
 
 	FVector ACC;
 
-	FRotator GYRO;
+	FVector GYRO;
 
 protected:
 	virtual void BeginPlay() override;
