@@ -49,7 +49,7 @@ void ARacket::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	Accelerometer = UDP->ACC; // set the accelerometer from udp connection
 	Gyrascope = UDP->GYRO; // set the gyrascope from udp connection
-	Magnetometer = FVector::ZeroVector;
+	Magnetometer = UDP->MAG;
 	UpdateFilter(Gyrascope, Accelerometer, Magnetometer);
 
 }
@@ -83,9 +83,10 @@ void ARacket::UpdateFilter(FVector Gyro, FVector Acc, FVector Mag)
 
 		// Convert the quaternion to Unreal's FQuat
 		FQuat QuatOrientation(q1, q2, q3, q0);  // Note the order might vary based on the filter's output
-
+		FQuat Rotation = QuatOrientation.Inverse();
+		Rotation.X = QuatOrientation.X;
 		// Set the actor's orientation using the quaternion
-		SetActorRotation(QuatOrientation);
+		SetActorRotation(Rotation);
 	}
 }
 

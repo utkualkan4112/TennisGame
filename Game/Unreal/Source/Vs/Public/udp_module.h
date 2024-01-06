@@ -41,6 +41,8 @@ public:
 	FVector ACC;
 
 	FVector GYRO;
+	
+	FVector MAG;
 
 protected:
 	virtual void BeginPlay() override;

@@ -98,10 +98,15 @@ void Audp_module::Listen()
 				GYRO.Y = FCString::Atof(*Values[1]);
 				GYRO.Z = FCString::Atof(*Values[2]);
 			}
-			else {
+			else if (left == "ACC") {
 				ACC.X = FCString::Atof(*Values[0]);
 				ACC.Y = FCString::Atof(*Values[1]);
 				ACC.Z = FCString::Atof(*Values[2]);
+			}
+			else {
+				MAG.X = FCString::Atof(*Values[0]);
+				MAG.Y = FCString::Atof(*Values[1]);
+				MAG.Z = FCString::Atof(*Values[2]);
 			}
 		}
 		
