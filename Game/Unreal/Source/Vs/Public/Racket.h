@@ -12,6 +12,7 @@ class UStaticMeshComponent;
 class Atcp_socket;
 class Audp_module;
 
+enum CalibrationState { NotCalibrated, Calibrating, Calibrated };
 
 UCLASS()
 class VS_API ARacket : public APawn
@@ -56,7 +57,6 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	FVector Magnetometer;
 
-	FRotator Orientation;
 
 
 
@@ -72,6 +72,50 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	void UpdateFilter(FVector Gyro, FVector Acc, FVector Mag);
+	FQuat UpdateFilter(FVector Gyro, FVector Acc, FVector Mag);
 
+	UPROPERTY(EditAnywhere)
+	int DesiredSampleCount = 100;
+
+	UPROPERTY(EditAnywhere)
+	float AccThreshold = 0.05f;
+	
+	UPROPERTY(EditAnywhere)
+	float GyroThreshold = 0.05f;
+	
+	UPROPERTY(EditAnywhere)
+	float MagThreshold = 0.05f;
+
+private: 
+	CalibrationState currentCalibrationState = NotCalibrated;
+	FVector rollingAccAverage, rollingGyroAverage, rollingMagAverage;
+	int sampleCount = 0;
+	
+
+	FVector AccBias;
+	FVector GyroBias;
+	FVector MagBias;
+
+	FVector PreviousAccReading, PreviousGyroReading, PreviousMagReading;
+
+	FVector CurrentVelocity;
+	FVector CurrentPosition;
+	
+	FTimerHandle StationaryCheckTimer;
+
+	bool IsDeviceStationary();
+
+	void UpdateRollingAverages();
+
+	void FinishCalibration();
+
+	void ResetCalibrationData();
+
+	void StartCalibration();
+
+	void ApplyZeroUpdates();
+
+	void CheckStationary();
+
+	FVector TransformAcceleration(FVector Acc, FQuat Orientation);
 };

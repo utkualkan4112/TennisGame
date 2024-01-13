@@ -86,7 +86,7 @@ void Audp_module::Listen()
 			ansiiData[BytesRead] = 0;
 
 			FString data = ANSI_TO_TCHAR(ansiiData);
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, "Message by UDP: " + data);
+			//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, "Message by UDP: " + data);
 
 			FString left;
 			FString right;
