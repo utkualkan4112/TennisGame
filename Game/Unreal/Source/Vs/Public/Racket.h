@@ -86,10 +86,30 @@ public:
 	UPROPERTY(EditAnywhere)
 	float MagThreshold = 0.05f;
 
+	UPROPERTY(EditAnywhere)
+	float PostCalAccThreshold = 0.05f;
+	UPROPERTY(EditAnywhere)
+	float PostCalGyroThreshold = 0.05f; 
+
+	UPROPERTY(EditAnywhere)
+	float PositionThreshold = 0.05f;
+
+	UPROPERTY(EditAnywhere)
+	float UpdatePositionTime = 0.01f;
+
+	UPROPERTY(EditAnywhere)
+	float SpeedScale = 0.5f;
+
 private: 
 	CalibrationState currentCalibrationState = NotCalibrated;
 	FVector rollingAccAverage, rollingGyroAverage, rollingMagAverage;
+
+	FVector RefrancePoint;
 	int sampleCount = 0;
+
+	float InterpolationSpeed = 0.1f; // Adjust as needed
+	float InterpolationDuration = 1.0f; // 1 second, adjust as needed
+	float InterpolationElapsed = 0.0f;
 	
 
 	FVector AccBias;
@@ -103,7 +123,11 @@ private:
 	
 	FTimerHandle StationaryCheckTimer;
 
+	FQuat RacketOrientation;
+
 	bool IsDeviceStationary();
+
+	bool IsDeviceStationaryPostCalibration();
 
 	void UpdateRollingAverages();
 

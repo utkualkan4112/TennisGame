@@ -5,6 +5,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "tcp_socket.h"
 #include "udp_module.h"
+#include "DrawDebugHelpers.h" // Debug
 
 
 
@@ -44,17 +45,53 @@ void ARacket::BeginPlay()
 		UDP->sendMessage("Hello");
 	}
 	// Set up a timer to check for stationarity
-	//GetWorldTimerManager().SetTimer(StationaryCheckTimer, this, &ARacket::CheckStationary, 0.01f, true);
+	GetWorldTimerManager().SetTimer(StationaryCheckTimer, this, &ARacket::CheckStationary, UpdatePositionTime, true);
 
 }
 
 void ARacket::CheckStationary()
 {
-	if (IsDeviceStationary()) {
-		ApplyZeroUpdates();
+	if (currentCalibrationState == Calibrated) {
+		if (IsDeviceStationaryPostCalibration()) {
+			ApplyZeroUpdates();
+			InterpolationElapsed = 0.0f;
+		}
+		else {
+			FVector CorrectedAcc = TransformAcceleration(Accelerometer, RacketOrientation); // Use orientation to correct acceleration
+			CurrentVelocity += (UDP->ACC - AccBias) * SpeedScale;
+			// Transform the movement to respect the actor's orientation
+			FVector MovementDelta = CurrentVelocity * GetWorld()->DeltaTimeSeconds;
+			FVector WorldMovementDelta = RacketOrientation.RotateVector(MovementDelta);
+
+			DrawDebugLine(
+				GetWorld(),
+				GetActorLocation(),
+				WorldMovementDelta + GetActorLocation(),
+				FColor::Red,
+				false, // Persistent (false means the line will not be persistent)
+				0.1f,
+				0, // Depth priority
+				2.0f
+			);
+			if (InterpolationElapsed < InterpolationDuration) {
+				// Perform interpolation
+				CurrentPosition = FMath::Lerp(CurrentPosition, CurrentPosition + WorldMovementDelta, InterpolationSpeed);
+				InterpolationElapsed += GetWorld()->DeltaTimeSeconds;
+			}
+			else {
+				// Update Position
+				CurrentPosition += WorldMovementDelta;
+			}
+			
+			// Set New Location
+			SetActorLocation(CurrentPosition);
+			
+		}
 	}
+	
 
 }
+
 
 
 // Called every frame
@@ -72,7 +109,7 @@ void ARacket::Tick(float DeltaTime)
 	case Calibrating:
 		if (IsDeviceStationary()) // Implement logic to check if device is stationary
 		{
-			ApplyZeroUpdates();
+			//ApplyZeroUpdates();
 			UpdateRollingAverages();
 			if (sampleCount >= DesiredSampleCount)
 			{
@@ -94,20 +131,26 @@ void ARacket::Tick(float DeltaTime)
 		Magnetometer = UDP->MAG - MagBias;
 
 
-		FQuat QuatOrientation = UpdateFilter(Gyrascope, Accelerometer, Magnetometer);
+		RacketOrientation = UpdateFilter(Gyrascope, Accelerometer, Magnetometer);
 
-		if (IsDeviceStationary()) {
+		if (FVector::Dist(RefrancePoint, CurrentPosition) > PositionThreshold) {
+			CurrentPosition = RefrancePoint;
+			SetActorLocation(CurrentPosition);
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("Current: %f"), FVector::Dist(RefrancePoint, CurrentPosition)));
+		}
+		/*
+		if (IsDeviceStationaryPostCalibration()) {
 			ApplyZeroUpdates();
 		}
 		else {
 			FVector CorrectedAcc = TransformAcceleration(Accelerometer, QuatOrientation); // Use orientation to correct acceleration
-			CurrentVelocity += CorrectedAcc * DeltaTime;
-			const float ScaleFactor = 200.0f;
-			CurrentPosition += CurrentVelocity * DeltaTime * ScaleFactor;
-		}
-
-		
-		SetActorLocation(CurrentPosition);
+			const float ScaleFactor = 0.5f;
+			CurrentVelocity += CorrectedAcc * ScaleFactor;
+			
+			CurrentPosition += CurrentVelocity;
+			//CurrentPosition.X = GetActorLocation().X;
+			SetActorLocation(CurrentPosition);
+		}*/
 		break;
 	}
 
@@ -156,6 +199,7 @@ FQuat ARacket::UpdateFilter(FVector Gyro, FVector Acc, FVector Mag)
 
 bool ARacket::IsDeviceStationary()
 {
+
 	FVector CurrentAcc = UDP->ACC;
 	FVector CurrentGyro = UDP->GYRO;
 	FVector CurrentMag = UDP->MAG;
@@ -174,8 +218,9 @@ bool ARacket::IsDeviceStationary()
 	PreviousMagReading = CurrentMag;
 
 	// Check if the readings are below the thresholds
-	return AccChange < AccThreshold && GyroChange < GyroThreshold && MagChange < MagThreshold;
+	return AccChange  < AccThreshold && GyroChange < GyroThreshold && MagChange < MagThreshold;
 }
+
 
 void ARacket::UpdateRollingAverages()
 {
@@ -201,6 +246,7 @@ void ARacket::FinishCalibration()
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("Calibration Complete"));
 
 	currentCalibrationState = Calibrated;
+	RefrancePoint = GetActorLocation();
 }
 
 void ARacket::ResetCalibrationData()
@@ -220,9 +266,31 @@ void ARacket::StartCalibration()
 	MagBias = FVector::ZeroVector;
 }
 
+bool ARacket::IsDeviceStationaryPostCalibration()
+{
+	FVector CurrentAcc = UDP->ACC;
+	FVector CurrentGyro = UDP->GYRO;
+
+	// Calculate the change in readings
+	float AccChange = FVector::Dist(PreviousAccReading, CurrentAcc);
+	float GyroChange = FVector::Dist(PreviousGyroReading, CurrentGyro);
+
+	// Update previous readings for the next frame
+	PreviousAccReading = CurrentAcc;
+	PreviousGyroReading = CurrentGyro;
+
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("AccChange: %f, GyroChange: %f"), AccChange, GyroChange));
+
+	// Check if the changes are below the post-calibration thresholds
+	return AccChange < PostCalAccThreshold; //&& GyroChange < PostCalGyroThreshold;
+}
+
 void ARacket::ApplyZeroUpdates()
 {
 	CurrentVelocity = FVector::ZeroVector;
+	
+	
+	GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Red, "Device is stationary");
 }
 
 FVector ARacket::TransformAcceleration(FVector Acc, FQuat Orientation)
