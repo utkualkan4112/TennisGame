@@ -22,13 +22,16 @@ class _SecondPageState extends State<SecondPage> {
 
   UserAccelerometerEvent? _userAccelerometerEvent;
   GyroscopeEvent? _gyroscopeEvent;
+  MagnetometerEvent? _magnetometerEvent;
 
   DateTime? _userAccelerometerUpdateTime;
   DateTime? _gyroscopeUpdateTime;
+  DateTime? _magnetometerUpdateTime;
 
 
   int? _userAccelerometerLastInterval;
   int? _gyroscopeLastInterval;
+  int? _magnetometerLastInterval;
   final _streamSubscriptions = <StreamSubscription<dynamic>>[];
 
   Duration sensorInterval = SensorInterval.gameInterval;
@@ -93,6 +96,18 @@ class _SecondPageState extends State<SecondPage> {
                     Text('${_gyroscopeLastInterval?.toString() ?? '?'} ms'),
                   ],
                 ),
+                TableRow(
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8.0),
+                      child: Text('Magnetometer'),
+                    ),
+                    Text(_magnetometerEvent?.x.toStringAsFixed(1) ?? '?'),
+                    Text(_magnetometerEvent?.y.toStringAsFixed(1) ?? '?'),
+                    Text(_magnetometerEvent?.z.toStringAsFixed(1) ?? '?'),
+                    Text('${_magnetometerLastInterval?.toString() ?? '?'} ms'),
+                  ],
+                ),
               ],
             ),
           ),
@@ -120,11 +135,11 @@ class _SecondPageState extends State<SecondPage> {
             (UserAccelerometerEvent event) {
           final now = DateTime.now();
           setState(() {
-            const double threshold = 0.1; // Define a suitable threshold
-            if (_userAccelerometerEvent != null && (_userAccelerometerEvent!.x.abs() > threshold || _userAccelerometerEvent!.y.abs() > threshold || _userAccelerometerEvent!.z.abs() > threshold)) {
+            const double threshold = 0.3; // Define a suitable threshold
+            //if (_userAccelerometerEvent != null && (_userAccelerometerEvent!.x.abs() > threshold || _userAccelerometerEvent!.y.abs() > threshold || _userAccelerometerEvent!.z.abs() > threshold)) {
               // Send data
               widget.server.sendDataToClient('ACC:${_userAccelerometerEvent?.x.toStringAsFixed(1)} ${_userAccelerometerEvent?.y.toStringAsFixed(1)} ${_userAccelerometerEvent?.z.toStringAsFixed(1)} \n');
-            }
+            //}
 
             _userAccelerometerEvent = event;
             if (_userAccelerometerUpdateTime != null) {
@@ -157,10 +172,10 @@ class _SecondPageState extends State<SecondPage> {
           final now = DateTime.now();
           setState(() {
             const double threshold = 0.1; // Define a suitable threshold
-            if (_gyroscopeEvent != null && (_gyroscopeEvent!.x.abs() > threshold || _gyroscopeEvent!.y.abs() > threshold || _gyroscopeEvent!.z.abs() > threshold)) {
+            //if (_gyroscopeEvent != null && (_gyroscopeEvent!.x.abs() > threshold || _gyroscopeEvent!.y.abs() > threshold || _gyroscopeEvent!.z.abs() > threshold)) {
               // Send data
               widget.server.sendDataToClient('GYRO:${_gyroscopeEvent?.x.toStringAsFixed(1)} ${_gyroscopeEvent?.y.toStringAsFixed(1)} ${_gyroscopeEvent?.z.toStringAsFixed(1)} \n');
-            }
+            //}
 
 
             _gyroscopeEvent = event;
@@ -181,6 +196,42 @@ class _SecondPageState extends State<SecondPage> {
                   title: Text("Sensor Not Found"),
                   content: Text(
                       "It seems that your device doesn't support Gyroscope Sensor"),
+                );
+              });
+        },
+        cancelOnError: true,
+      ),
+    );
+
+    _streamSubscriptions.add(
+      magnetometerEventStream(samplingPeriod: sensorInterval).listen(
+            (MagnetometerEvent event) {
+          final now = DateTime.now();
+          setState(() {
+            const double threshold = 0.3; // Define a suitable threshold
+            //if (_magnetometerEvent != null && (_magnetometerEvent!.x.abs() > threshold || _magnetometerEvent!.y.abs() > threshold || _magnetometerEvent!.z.abs() > threshold)) {
+              // Send data
+              widget.server.sendDataToClient('MAG:${_magnetometerEvent?.x.toStringAsFixed(1)} ${_magnetometerEvent?.y.toStringAsFixed(1)} ${_magnetometerEvent?.z.toStringAsFixed(1)} \n');
+            //}
+
+            _magnetometerEvent = event;
+            if (_magnetometerUpdateTime != null) {
+              final interval = now.difference(_magnetometerUpdateTime!);
+              if (interval > _ignoreDuration) {
+                _magnetometerLastInterval = interval.inMilliseconds;
+              }
+            }
+          });
+          _magnetometerUpdateTime = now;
+        },
+        onError: (e) {
+          showDialog(
+              context: context,
+              builder: (context) {
+                return const AlertDialog(
+                  title: Text("Sensor Not Found"),
+                  content: Text(
+                      "It seems that your device doesn't support User Magnetometer Sensor"),
                 );
               });
         },

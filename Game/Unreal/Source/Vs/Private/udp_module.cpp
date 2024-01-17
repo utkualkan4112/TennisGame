@@ -62,11 +62,10 @@ void Audp_module::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void Audp_module::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 	Listen(); // Listen for messages
 
 	//FString t = "test222";
-	//sendMessage(t); // Send Message Test
+	//sendMessage("t"); // Send Message Test
 }
 
 void Audp_module::Listen()
@@ -87,23 +86,30 @@ void Audp_module::Listen()
 			ansiiData[BytesRead] = 0;
 
 			FString data = ANSI_TO_TCHAR(ansiiData);
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, "Message by UDP: " + data);
+			//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, "Message by UDP: " + data);
+
 			FString left;
 			FString right;
 			TArray<FString> Values;
 			data.Split(TEXT(":"), &left, &right);
 			right.ParseIntoArray(Values, TEXT(" "));
 			if (left == "GYRO") {
-				GYRO.Roll -= FCString::Atof(*Values[0]);
-				GYRO.Pitch += FCString::Atof(*Values[1]);
-				GYRO.Yaw += FCString::Atof(*Values[2]);
+				GYRO.X = FCString::Atof(*Values[0]);
+				GYRO.Y = FCString::Atof(*Values[1]);
+				GYRO.Z = FCString::Atof(*Values[2]);
+			}
+			else if (left == "ACC") {
+				ACC.X = FCString::Atof(*Values[0]);
+				ACC.Y = FCString::Atof(*Values[1]);
+				ACC.Z = FCString::Atof(*Values[2]);
 			}
 			else {
-				ACC.X += FCString::Atof(*Values[0]);
-				ACC.Y += FCString::Atof(*Values[1]);
-				ACC.Z += FCString::Atof(*Values[2]);
+				MAG.X = FCString::Atof(*Values[0]);
+				MAG.Y = FCString::Atof(*Values[1]);
+				MAG.Z = FCString::Atof(*Values[2]);
 			}
 		}
+		
 	}
 	else {
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, "Not Connected");
