@@ -107,7 +107,7 @@ void ARacket::Tick(float DeltaTime)
 		break;
 
 	case Calibrating:
-		if (IsDeviceStationary()) // Implement logic to check if device is stationary
+		if (IsDeviceStationary()) 
 		{
 			//ApplyZeroUpdates();
 			UpdateRollingAverages();
