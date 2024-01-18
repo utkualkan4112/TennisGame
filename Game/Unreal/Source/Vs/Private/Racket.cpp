@@ -130,8 +130,11 @@ void ARacket::Tick(float DeltaTime)
 		Gyrascope = UDP->GYRO - GyroBias;
 		Magnetometer = UDP->MAG - MagBias;
 
-
+		//if (UDP->IsRecieve) {
 		RacketOrientation = UpdateFilter(Gyrascope, Accelerometer, Magnetometer);
+			//UDP->IsRecieve = false;
+		//}
+
 
 		if (FVector::Dist(RefrancePoint, CurrentPosition) > PositionThreshold) {
 			CurrentPosition = RefrancePoint;
@@ -190,6 +193,8 @@ FQuat ARacket::UpdateFilter(FVector Gyro, FVector Acc, FVector Mag)
 		FQuat QuatOrientation(q1, q2, q3, q0);  // Note the order might vary based on the filter's output
 		FQuat Rotation = QuatOrientation.Inverse();
 		Rotation.X = QuatOrientation.X;
+
+
 		// Set the actor's orientation using the quaternion
 		SetActorRotation(Rotation);
 		return Rotation;
