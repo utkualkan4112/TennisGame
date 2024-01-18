@@ -75,6 +75,7 @@ void Audp_module::Listen()
 	if (Socket) {
 		while (Socket->HasPendingData(Size))
 		{
+			//IsRecieve = true;
 			uint8* Recv = new uint8[Size];
 			int32 BytesRead = 0;
 
@@ -109,7 +110,6 @@ void Audp_module::Listen()
 				MAG.Z = FCString::Atof(*Values[2]);
 			}
 		}
-		
 	}
 	else {
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, "Not Connected");

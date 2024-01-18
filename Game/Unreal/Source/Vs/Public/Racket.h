@@ -105,6 +105,7 @@ private:
 	FVector rollingAccAverage, rollingGyroAverage, rollingMagAverage;
 
 	FVector RefrancePoint;
+
 	int sampleCount = 0;
 
 	float InterpolationSpeed = 0.1f; // Adjust as needed
